@@ -1,0 +1,49 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Python cache and build output
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Jupyter and notebook temp files
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# Local configuration
+config/.env
+config/*.local
+
+# Chroma vector store artifacts
+chroma_db/
+
+# Logs and temp files
+*.log
+logs/
+.DS_Store
+Thumbs.db
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env.local
+
+# Editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# System files
+__MACOSX/
+*.zip
+*.bak
+*.tmp
