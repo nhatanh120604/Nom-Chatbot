@@ -1,15 +1,18 @@
-:root {
-  color-scheme: dark;
-  font-family: "Cormorant Garamond", "Georgia", serif;
-  line-height: 1.5;
-  color: #f6ede0;
-  background-color: #101621;
-}
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Serif+TC:wght@400;600&display=swap");
 
 @font-face {
   font-family: "NomNaTong";
-  src: local("Nom Na Tong"), local("NomNaTong");
+  src: url("/fonts/NomNaTong-Regular.woff2") format("woff2");
   font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: "Noto Serif TC", "NomNaTong", "Cormorant Garamond",
+    "Times New Roman", serif;
+  line-height: 1.5;
+  color: #f6ede0;
+  background-color: #101621;
 }
 
 * {
@@ -135,6 +138,7 @@ body {
 }
 
 .hero-title {
+  font-family: "Cormorant Garamond", "Noto Serif TC", serif;
   font-size: clamp(2.6rem, 5.5vw, 3.6rem);
   margin: 0 0 0.85rem;
   letter-spacing: 0.12em;

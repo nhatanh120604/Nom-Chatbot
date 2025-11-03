@@ -129,7 +129,7 @@ export default function App() {
       </div>
       <div className="app-shell">
         <section className="hero-card">
-          <h1 className="hero-title">Fulbright Nôm Library</h1>
+          <h1 className="hero-title">NômSense</h1>
           <p className="hero-subtitle">
             Đối thoại với bộ sưu tập Hán Nôm – truy xuất dẫn chứng chuẩn xác và
             cảm nhận sắc thái cổ điển qua từng trang sách.
