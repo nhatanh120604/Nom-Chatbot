@@ -18,7 +18,17 @@ import logging
 import psutil
 
 LOGGER = logging.getLogger(__name__)
+if not LOGGER.handlers:
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+        "%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    LOGGER.addHandler(handler)
 LOGGER.setLevel(logging.INFO)
+LOGGER.propagate = False
 
 
 def _gpu_snapshot() -> Optional[dict[str, float | str]]:
