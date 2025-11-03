@@ -13,3 +13,4 @@ chromadb
 pymupdf
 sentence-transformers
 torch
+gdown
