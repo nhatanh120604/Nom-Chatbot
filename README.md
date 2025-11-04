@@ -158,8 +158,3 @@ Open the printed URL (typically <http://localhost:5173>). Ensure the backend is 
 3. Expand ingestion to handle Markdown/HTML scraping pipelines.
 4. Implement authentication and usage analytics for multi-user deployments.
 
----
-
-## License
-
-Specify your license in this section (e.g., MIT, Apache-2.0). If one is not yet chosen, replace this note with the appropriate text when ready.

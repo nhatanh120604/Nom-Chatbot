@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+import re
 from typing import Dict, Iterable, List, Optional, Sequence
 from urllib.parse import quote, quote_plus
 
@@ -25,11 +26,25 @@ from ..settings import Settings
 LOGGER = logging.getLogger(__name__)
 
 
+BOOK_TITLE_BY_FOLDER: Dict[str, str] = {
+    "Book1": "Khái luận văn tự học Chữ Nôm",
+    "Book2": "Ngôn ngữ. Văn tự. Ngữ văn (Tuyển tập)",
+}
+
+
 def iter_document_paths(data_dir: Path, extensions: Iterable[str]) -> List[Path]:
     candidates: set[Path] = set()
     for ext in extensions:
         candidates.update(path.resolve() for path in data_dir.glob(f"**/*{ext}"))
     return sorted(candidates)
+
+
+def normalise_chapter_label(label: Optional[str]) -> Optional[str]:
+    if not label:
+        return None
+    cleaned = re.sub(r"_+", " ", label)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned or None
 
 
 def derive_chapter_metadata(path: Path) -> Dict[str, Optional[str]]:
@@ -52,6 +67,9 @@ def load_documents(data_dir: Path, extensions: Sequence[str]) -> List[Document]:
     documents: List[Document] = []
     for path in iter_document_paths(data_dir, extensions):
         chapter_meta = derive_chapter_metadata(path)
+        chapter_meta["chapter"] = normalise_chapter_label(chapter_meta.get("chapter"))
+        book_key = path.parent.name
+        book_title = BOOK_TITLE_BY_FOLDER.get(book_key, book_key.replace("_", " "))
         loader = PyMuPDFLoader(str(path))
         for doc in loader.load():
             text = doc.page_content.strip()
@@ -59,15 +77,19 @@ def load_documents(data_dir: Path, extensions: Sequence[str]) -> List[Document]:
                 continue
 
             doc_meta = chapter_meta.copy()
+            doc_meta["book_key"] = book_key
+            doc_meta["book_title"] = book_title
             page = doc.metadata.get("page_number")
             if page is None:
                 page = doc.metadata.get("page")
             if page is not None:
                 page_number = int(page) + 1
                 doc.metadata["page_number"] = page_number
-                doc_meta["citation_label"] = f"{doc_meta['chapter']} - p.{page_number}"
+                doc_meta["citation_label"] = (
+                    f"{book_title} – {doc_meta['chapter']} - p.{page_number}"
+                )
             else:
-                doc_meta["citation_label"] = doc_meta["chapter"]
+                doc_meta["citation_label"] = f"{book_title} – {doc_meta['chapter']}"
 
             doc.metadata.setdefault("source", str(path))
             doc.metadata.setdefault("file_name", path.name)
@@ -87,16 +109,21 @@ def unique_citations(docs: Sequence[Document]) -> List[str]:
         if not label:
             chapter = doc.metadata.get("chapter")
             page = doc.metadata.get("page_number")
+            book_title = doc.metadata.get("book_title")
             if chapter and page:
-                label = f"{chapter} - p.{page}"
+                chapter_part = f"{chapter} - p.{page}"
             elif chapter:
-                label = chapter
+                chapter_part = chapter
             else:
-                label = (
+                chapter_part = (
                     doc.metadata.get("file_name")
                     or doc.metadata.get("source")
                     or "Unknown source"
                 )
+            if book_title:
+                label = f"{book_title} – {chapter_part}"
+            else:
+                label = chapter_part
         if label not in citations:
             citations.append(label)
     return citations
@@ -109,16 +136,21 @@ def format_docs(docs: Sequence[Document]) -> str:
         if not label:
             chapter = doc.metadata.get("chapter")
             page = doc.metadata.get("page_number")
+            book_title = doc.metadata.get("book_title")
             if chapter and page:
-                label = f"{chapter} - p.{page}"
+                chapter_part = f"{chapter} - p.{page}"
             elif chapter:
-                label = chapter
+                chapter_part = chapter
             else:
-                label = (
+                chapter_part = (
                     doc.metadata.get("file_name")
                     or doc.metadata.get("source")
                     or "Unknown source"
                 )
+            if book_title:
+                label = f"{book_title} – {chapter_part}"
+            else:
+                label = chapter_part
         formatted.append(f"Source: {label}\n{doc.page_content}")
     return "\n\n".join(formatted) if formatted else "No supporting context retrieved."
 
@@ -243,12 +275,22 @@ Bia chùa Tháp Miếu (1210) có hơn hai chục chữ Nôm, như:
         self.ensure_vectorstore(force_rebuild=force_rebuild)
 
     def _build_source_payload(self, doc: Document) -> SourceChunk:
-        label = (
-            doc.metadata.get("citation_label")
-            or doc.metadata.get("chapter")
-            or doc.metadata.get("file_name")
-            or "Unknown source"
-        )
+        book_title = doc.metadata.get("book_title")
+        label = doc.metadata.get("citation_label")
+        if not label:
+            chapter = doc.metadata.get("chapter")
+            page = doc.metadata.get("page_number")
+            if chapter and page:
+                chapter_part = f"{chapter} - p.{page}"
+            elif chapter:
+                chapter_part = chapter
+            else:
+                chapter_part = (
+                    doc.metadata.get("file_name")
+                    or doc.metadata.get("source")
+                    or "Unknown source"
+                )
+            label = f"{book_title} – {chapter_part}" if book_title else chapter_part
         page_number = doc.metadata.get("page_number")
         chapter = doc.metadata.get("chapter")
         file_name = doc.metadata.get("file_name")
@@ -260,6 +302,7 @@ Bia chùa Tháp Miếu (1210) có hơn hai chục chữ Nôm, như:
             label=label,
             page_number=page_number,
             chapter=chapter,
+            book_title=book_title,
             file_name=file_name,
             source_path=source_path,
             text=doc.page_content,

@@ -14,6 +14,9 @@ __pycache__/
 build/
 dist/
 
+
+Word/
+
 # Jupyter and notebook temp files
 .ipynb_checkpoints/
 *.nbconvert.ipynb

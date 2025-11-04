@@ -9,6 +9,7 @@ export interface AskRequest {
 export interface SourceChunk {
   label: string;
   chapter?: string;
+  book_title?: string;
   file_name?: string;
   source_path?: string;
   page_number?: number;

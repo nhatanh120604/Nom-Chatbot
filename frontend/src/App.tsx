@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type ChangeEvent } from "react";
-import { askQuestion, resolveViewerUrl } from "./client";
+import { askQuestion } from "./client";
 import type { AskRequest, AskResponse, SourceChunk } from "./types";
 
 const DEFAULT_REQUEST: AskRequest = {
@@ -21,7 +21,6 @@ export default function App() {
   const [answerHighlighted, setAnswerHighlighted] = useState(false);
   const answerRef = useRef<HTMLDivElement | null>(null);
   const answerTextRef = useRef<HTMLDivElement | null>(null);
-  const previewRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedSource = useMemo(() => {
     if (selectedSource) {
@@ -29,28 +28,6 @@ export default function App() {
     }
     return answer?.sources?.[0] ?? null;
   }, [answer?.sources, selectedSource]);
-
-  const previewUrl = useMemo(() => {
-    if (!resolvedSource?.viewer_url) {
-      return null;
-    }
-    const absolute = resolveViewerUrl(resolvedSource.viewer_url);
-    if (!absolute) {
-      return null;
-    }
-    try {
-      const url = new URL(absolute);
-      if (url.hash.length > 1) {
-        const params = new URLSearchParams(url.hash.slice(1));
-        params.delete("search");
-        const hash = params.toString();
-        url.hash = hash ? `#${hash}` : "";
-      }
-      return url.toString();
-    } catch (_) {
-      return absolute.split("#")[0];
-    }
-  }, [resolvedSource?.viewer_url]);
 
   const resolvedSourceLabel = useMemo(() => {
     if (!resolvedSource) {
@@ -69,18 +46,6 @@ export default function App() {
     window.setTimeout(() => {
       const target = answerTextRef.current ?? answerRef.current;
       target?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 0);
-  };
-
-  const scrollPreviewIntoView = () => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    window.setTimeout(() => {
-      previewRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
     }, 0);
   };
 
@@ -109,7 +74,6 @@ export default function App() {
   const handleSourceClick = (source: SourceChunk) => {
     setSelectedSource(source);
     setAnswerHighlighted(false);
-    scrollPreviewIntoView();
   };
 
   const clearAnswerHighlight = () => setAnswerHighlighted(false);
@@ -125,14 +89,12 @@ export default function App() {
       <div className="cloud-layer" aria-hidden="true">
         <span className="cloud cloud-1" />
         <span className="cloud cloud-2" />
-        <span className="cloud cloud-3" />
       </div>
       <div className="app-shell">
         <section className="hero-card">
           <h1 className="hero-title">NômSense</h1>
           <p className="hero-subtitle">
-            Đối thoại với bộ sưu tập Hán Nôm – truy xuất dẫn chứng chuẩn xác và
-            cảm nhận sắc thái cổ điển qua từng trang sách.
+            Hỏi đáp với Gs. Nguyễn Quang Hồng về chữ Nôm.
           </p>
         </section>
 
@@ -147,14 +109,20 @@ export default function App() {
             />
           </div>
 
-          <button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Đang phân tích…" : "Truy vấn"}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className={loading ? "primary-button is-loading" : "primary-button"}
+          >
+            {!loading && <span aria-hidden="true" className="button-icon" />}
+            <span>{loading ? "Đang phân tích…" : "Truy vấn"}</span>
           </button>
 
           {loading && (
             <div className="loading-indicator" role="status" aria-live="polite">
               <span className="spinner" aria-hidden="true" />
-              <span>Đang dò tìm trong thư tàng Hán Nôm…</span>
+              <span>Chờ Gs. Nguyễn Quang Hồng giải đáp…</span>
             </div>
           )}
 
@@ -187,84 +155,89 @@ export default function App() {
                       source.page_number ?? idx
                     }`;
                     const isExpanded = expandedKey === key;
+                    const titleParts: string[] = [];
+                    const bookTitle = source.book_title?.trim();
+                    const cleanedChapter = source.chapter
+                      ? source.chapter
+                          .replace(/_/g, " ")
+                          .replace(/\s+/g, " ")
+                          .trim()
+                      : "";
+                    const hideChapter =
+                      bookTitle === "Ngôn ngữ. Văn tự. Ngữ văn (Tuyển tập)";
+                    if (bookTitle) {
+                      titleParts.push(bookTitle);
+                    }
+                    if (
+                      cleanedChapter &&
+                      !hideChapter &&
+                      cleanedChapter !== bookTitle &&
+                      !titleParts.includes(cleanedChapter)
+                    ) {
+                      titleParts.push(cleanedChapter);
+                    }
+                    const titleText =
+                      titleParts.length > 0
+                        ? titleParts.join(" – ")
+                        : source.label;
                     return (
-                      <div
+                      <article
                         key={key}
-                        className={
-                          isActive ? "citation-item active" : "citation-item"
-                        }
-                        onClick={() => handleSourceClick(source)}
+                        className={`citation-item${isActive ? " active" : ""}${
+                          isExpanded ? " expanded" : ""
+                        }`}
                       >
-                        <div className="citation-meta">
-                          <span>{source.label}</span>
-                          {source.page_number && (
-                            <span>p. {source.page_number}</span>
-                          )}
-                        </div>
-                        <div className="citation-actions">
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={(evt) => {
-                              evt.stopPropagation();
-                              clearAnswerHighlight();
-                              setExpandedKey(isExpanded ? null : key);
-                            }}
-                          >
-                            {isExpanded ? "Thu gọn" : "Xem trích đoạn"}
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={(evt) => {
-                              evt.stopPropagation();
-                              clearAnswerHighlight();
-                              handleSourceClick(source);
-                            }}
-                          >
-                            Xem nhanh
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          className="citation-toggle"
+                          onClick={() => {
+                            handleSourceClick(source);
+                            clearAnswerHighlight();
+                            setExpandedKey(isExpanded ? null : key);
+                          }}
+                          aria-expanded={isExpanded}
+                        >
+                          <div className="citation-meta">
+                            <span className="citation-title">{titleText}</span>
+                            {source.page_number && (
+                              <span className="citation-page">
+                                P.{source.page_number}
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={
+                              isExpanded
+                                ? "citation-icon citation-icon--open"
+                                : "citation-icon"
+                            }
+                            aria-hidden="true"
+                          />
+                        </button>
                         {isExpanded && (
                           <div className="snippet">{source.text}</div>
                         )}
-                      </div>
+                      </article>
                     );
                   })}
                 </div>
               )}
-
-              <div className="source-preview" ref={previewRef}>
-                <div className="source-preview-header">
-                  <span>{resolvedSourceLabel}</span>
-                  {resolvedSource?.viewer_url && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const direct = resolveViewerUrl(
-                          resolvedSource.viewer_url
-                        );
-                        if (direct && typeof window !== "undefined") {
-                          window.open(direct, "_blank", "noopener,noreferrer");
-                        }
-                      }}
-                    >
-                      Mở toàn văn
-                    </button>
-                  )}
-                </div>
-                {previewUrl ? (
-                  <iframe src={previewUrl} title="Xem nhanh nguồn" />
-                ) : (
-                  <p>
-                    Chọn một nguồn để xem nhanh. Nếu nguồn không có bản PDF nội
-                    bộ, bạn vẫn có thể mở toàn văn trong tab mới.
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </section>
+
+        <footer className="site-footer">
+          <p className="footer-line">
+            Tư liệu trích từ Khái luận Văn tự học chữ Nôm, Nguyễn Quang Hồng
+            (chủ biên), NXB Giáo dục, 2008.
+          </p>
+          <p className="footer-line">
+            Source: An Introduction to the Study of the Nôm Script, ed. Nguyễn
+            Quang Hồng, Education Publishing House, 2008.
+          </p>
+          <span className="footer-divider" aria-hidden="true" />
+          <p className="footer-line">© 2025 Digitizing Việt Nam</p>
+        </footer>
       </div>
     </div>
   );

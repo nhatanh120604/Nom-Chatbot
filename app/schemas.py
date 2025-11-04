@@ -18,6 +18,7 @@ class SourceChunk(BaseModel):
     label: str
     page_number: Optional[int] = None
     chapter: Optional[str] = None
+    book_title: Optional[str] = None
     file_name: Optional[str] = None
     source_path: Optional[str] = None
     text: str
