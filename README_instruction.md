@@ -104,5 +104,3 @@ This project has two parts: a Python **backend** (FastAPI) that runs the RAG log
 1. Run ingestion and the backend (`uvicorn`).
 2. Start the frontend (`npm run dev`).
 3. Visit the frontend URL, ask a question, and click a citation to view the highlighted PDF snippet.
-
-Keep this guide handy while you work—update it as you customize the project.
