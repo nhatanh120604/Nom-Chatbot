@@ -116,7 +116,7 @@ export default function App() {
             className={loading ? "primary-button is-loading" : "primary-button"}
           >
             {!loading && <span aria-hidden="true" className="button-icon" />}
-            <span>{loading ? "Đang phân tích…" : "Truy vấn"}</span>
+            <span>{loading ? "Đang phân tích…" : "Đặt câu hỏi"}</span>
           </button>
 
           {loading && (
@@ -228,12 +228,15 @@ export default function App() {
 
         <footer className="site-footer">
           <p className="footer-line">
-            Tư liệu trích từ Khái luận Văn tự học chữ Nôm, Nguyễn Quang Hồng
-            (chủ biên), NXB Giáo dục, 2008.
+            Tư liệu trích từ Khái luận Văn tự học chữ Nôm, Nguyễn Quang Hồng,
+            NXB Giáo dục, 2008 & Ngôn ngữ. Văn tự. Ngữ văn, Nguyễn Quang Hồng,
+            NXB Khoa học Xã hội, 2018 .
           </p>
           <p className="footer-line">
-            Source: An Introduction to the Study of the Nôm Script, ed. Nguyễn
-            Quang Hồng, Education Publishing House, 2008.
+            An Introduction to the Study of Nôm Script (Khái luận Văn tự học chữ
+            Nôm), Nguyễn Quang Hồng, Education Publishing House, 2008, and
+            Language. Script. Literature (Ngôn ngữ. Văn tự. Ngữ văn), Nguyễn
+            Quang Hồng, Social Sciences Publishing House, 2018.
           </p>
           <span className="footer-divider" aria-hidden="true" />
           <p className="footer-line">© 2025 Digitizing Việt Nam</p>
