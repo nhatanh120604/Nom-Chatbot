@@ -1,0 +1,43 @@
+# Use Python 3.11 slim image
+FROM python:3.11-slim
+
+# Set up a new user named "user" with user ID 1000
+RUN useradd -m -u 1000 user
+
+# Set working directory to the user's home directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY --chown=user requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY --chown=user . .
+
+# Fix permissions for /app directory to allow writing (for chroma_db creation)
+RUN chown -R user:user /app
+
+# Make the start script executable
+RUN chmod +x start.sh
+
+# Switch to the "user" user
+USER user
+
+# Set environment variables
+ENV PORT=7860
+ENV PERSIST_DIR=/app/chroma_db
+ENV PATH="/home/user/.local/bin:$PATH"
+ENV PYTHONPATH=/app
+
+# Expose the port
+EXPOSE 7860
+
+# Run the start script
+CMD ["./start.sh"]

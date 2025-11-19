@@ -1,3 +1,12 @@
+---
+title: Fulbright Nôm Library RAG
+emoji: 📚
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # Fulbright Nôm Library – RAG Chat Experience
 
 A full-stack Retrieval-Augmented Generation (RAG) assistant that lets readers explore the Fulbright Hán-Nôm library collection. The backend runs a FastAPI + LangChain pipeline backed by a Chroma vector store and OpenAI chat completions, while the frontend delivers a refined React interface with animated visuals, source citations, and in-place PDF previewing.
